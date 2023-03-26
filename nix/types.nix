@@ -138,7 +138,7 @@ in rec {
     };
 
     extraConfig = mkOption {
-      type = types.line;
+      type = types.lines;
       description = "neovim configs in lua.";
       default = "";
       example = literalExample ''
