@@ -17,6 +17,12 @@ let
     (flatten (map expandPlugin (cfg.optPlugins ++ cfg.bundles)));
   bundles = map toBundle cfg.bundles;
 
+  extraPackages = let
+    f = x: if x ? extraPackages then x.extraPackages else [ ];
+    g = map f;
+  in flatten (map g [ cfg.startPlugins cfg.optPlugins cfg.bundles ])
+  ++ cfg.extraPackages;
+
   oboroSetupCode = let
     configRoot = { inherit startPlugins optPlugins bundles; };
     oboroJson = writeText "oboro.json" (toJSON configRoot);
@@ -43,6 +49,7 @@ in {
   config = mkIf cfg.enable {
 
     programs.neovim = {
+      inherit extraPackages;
       inherit (cfg) package withRuby withNodeJs withPython3;
       enable = true;
       plugins = 
