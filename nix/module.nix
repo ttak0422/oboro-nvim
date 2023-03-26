@@ -52,9 +52,13 @@ in {
       inherit extraPackages;
       inherit (cfg) package withRuby withNodeJs withPython3;
       enable = true;
-      plugins = 
-      (map (p: { inherit (p) plugin; optional = false; }) startPlugins)
-      ++ (map (p: { inherit (p) plugin; optional = true; }) optPlugins);
+      plugins = (map (p: {
+        inherit (p) plugin;
+        optional = false;
+      }) startPlugins) ++ (map (p: {
+        inherit (p) plugin;
+        optional = true;
+      }) optPlugins);
     };
     xdg.configFile."nvim/init.lua".text = lib.mkAfter ''
       ${cfg.extraConfig}
