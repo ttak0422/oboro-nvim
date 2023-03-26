@@ -90,11 +90,6 @@
           wip = scripts;
         };
       in {
-        # hmModule.aarch64-darwin.test = { self, lib, ... }: {
-        #   options.programs.oboro-nvim = {
-        #     enable = lib.mkEnableOption "oboro-nvim";
-        #   };
-        # };
         darwinModules = rec {
           oboro-nvim = import ./nix/module.nix { inherit oboro nix-filter scripts; };
           default = oboro-nvim;

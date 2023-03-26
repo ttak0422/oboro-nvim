@@ -1,7 +1,0 @@
--- ayu-vim
-vim.cmd([[
-  set termguicolors
-  let ayucolor="light"
-  colorscheme ayu-vim
-]])
-
