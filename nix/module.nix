@@ -50,6 +50,7 @@ in {
       ++ (map (p: { inherit (p) plugin; optional = true; }) optPlugins);
     };
     xdg.configFile."nvim/init.lua".text = lib.mkAfter ''
+      ${cfg.extraConfig}
       ${oboroSetupCode}
     '';
   };
