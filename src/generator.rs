@@ -49,45 +49,55 @@ fn gen_config(config: &OboroConfig, root: &str) -> Result<()> {
     // setup
     create_dir(String::from(root) + "/cfgs")?;
     create_dir(String::from(root) + "/deps")?;
-    create_dir(String::from(root) + "/targets")?;
+    create_dir(String::from(root) + "/plugin")?;
+    create_dir(String::from(root) + "/plugins")?;
 
     // lazy
     for plugin in config.lazy_plugins.iter() {
         let cfg_path = String::from(root) + "/cfgs/" + plugin.id;
         let deps_path = String::from(root) + "/deps/" + plugin.id;
-        let target_path = String::from(root) + "/targets/" + plugin.id;
+        let plugin_path = String::from(root) + "/plugin/" + plugin.id;
+        let plugins_path = String::from(root) + "/plugins/" + plugin.id;
         let mut cfg_file = File::create(&cfg_path)?;
         let mut deps_file = File::create(&deps_path)?;
-        let mut target_file = File::create(&target_path)?;
+        let mut plugin_file = File::create(&plugin_path)?;
+        let mut plugins_file = File::create(&plugins_path)?;
         write!(cfg_file, "{}", plugin.config)?;
         write!(deps_file, "return {}", to_lua_table(&plugin.deps))?;
-        write!(target_file, "return {{'{}'}}", plugin.id)?;
-
+        write!(plugin_file, "return '{}'", plugin.id)?;
+        write!(plugins_file, "return {{}}")?;
         println!("write: {}", &cfg_path);
         println!("write: {}", &deps_path);
-        println!("write: {}", &target_path);
+        println!("write: {}", &plugin_path);
+        println!("write: {}", &plugins_path);
         cfg_file.flush().map_err(|err| anyhow!(err))?;
         deps_file.flush().map_err(|err| anyhow!(err))?;
-        target_file.flush().map_err(|err| anyhow!(err))?;
+        plugin_file.flush().map_err(|err| anyhow!(err))?;
+        plugins_file.flush().map_err(|err| anyhow!(err))?;
     }
 
     // bundle
     for bundle in config.bundles.iter() {
         let cfg_path = String::from(root) + "/cfgs/" + bundle.id;
         let deps_path = String::from(root) + "/deps/" + bundle.id;
-        let target_path = String::from(root) + "/targets/" + bundle.id;
+        let plugin_path = String::from(root) + "/plugin/" + bundle.id;
+        let plugins_path = String::from(root) + "/plugins/" + bundle.id;
         let mut cfg_file = File::create(&cfg_path)?;
         let mut deps_file = File::create(&deps_path)?;
-        let mut target_file = File::create(&target_path)?;
+        let mut plugin_file = File::create(&plugin_path)?;
+        let mut plugins_file = File::create(&plugins_path)?;
         write!(cfg_file, "{}", bundle.config)?;
         write!(deps_file, "return {}", to_lua_table(&bundle.deps))?;
-        write!(target_file, "return {}", to_lua_table(&bundle.plugins))?;
+        write!(plugin_file, "return nil")?;
+        write!(plugins_file, "return {}", to_lua_table(&bundle.plugins))?;
         println!("write: {}", &cfg_path);
         println!("write: {}", &deps_path);
-        println!("write: {}", &target_path);
+        println!("write: {}", &plugin_path);
+        println!("write: {}", &plugins_path);
         cfg_file.flush().map_err(|err| anyhow!(err))?;
         deps_file.flush().map_err(|err| anyhow!(err))?;
-        target_file.flush().map_err(|err| anyhow!(err))?;
+        plugin_file.flush().map_err(|err| anyhow!(err))?;
+        plugins_file.flush().map_err(|err| anyhow!(err))?;
     }
     Ok(())
 }

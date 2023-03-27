@@ -1,6 +1,7 @@
 -- configurations.
 --
--- targets/<PLUGIN_ID | BUNDLE_ID> ... plugin name table.
+-- plugin/<PLUGIN_ID> .... plugin id (nil or string).
+-- plugins/<BUNDLE_ID> ... plugins id table.
 -- cfg/<PLUGIN_ID | BUNDLE_ID> ....... config.
 -- deps/<PLUGIN_ID | BUNDLE_ID> ...... depends plugin id table.
 -- mods/<MODULE> ..................... plugin id table on require `<MODULE>`.
@@ -16,6 +17,13 @@
 
 local loaded = {}
 
+local function configure(opt, id)
+	local ok, err_msg = pcall(dofile, opt.root .. "/cfgs/" .. id)
+	if not ok then
+		print("[" .. id .. "] configure error: " .. (err_msg or "-- no msg --"))
+	end
+end
+
 -- load plugin.
 local function load(opt, id)
 	if loaded[id] then
@@ -27,11 +35,16 @@ local function load(opt, id)
 		load(opt, dep)
 	end
 
-	for _, target in ipairs(dofile(opt.root .. "/targets/" .. id)) do
-		vim.cmd("packadd " .. target)
+	local plugin = dofile(opt.root .. "/plugin/" .. id)
+	if plugin ~= nil then
+		vim.cmd("packadd " .. plugin)
 	end
 
-	dofile(opt.root .. "/cfgs/" .. id)
+	for _, p in ipairs(dofile(opt.root .. "/plugins/" .. id)) do
+		load(opt, p)
+	end
+
+	configure(opt, id)
 end
 
 return {
