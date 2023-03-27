@@ -15,7 +15,8 @@
 -- lazy .............................. plugin id table to be loaded using timer.
 -- startup ........................... startup config.
 
-local loaded = {}
+local loaded_plugins = {}
+local loaded_mods = {}
 
 local function configure(opt, id)
 	local ok, err_msg = pcall(dofile, opt.root .. "/cfgs/" .. id)
@@ -26,10 +27,10 @@ end
 
 -- load plugin.
 local function load(opt, id)
-	if loaded[id] then
+	if loaded_plugins[id] then
 		return nil
 	end
-	loaded[id] = true
+	loaded_plugins[id] = true
 
 	for _, dep in ipairs(dofile(opt.root .. "/deps/" .. id)) do
 		load(opt, dep)
@@ -97,10 +98,10 @@ return {
 
 		-- setup module loader
 		table.insert(package.loaders, 1, function(mod_name)
-			if loaded[mod_name] then
+			if loaded_mods[mod_name] then
 				return nil
 			end
-			loaded[mod_name] = true
+			loaded_mods[mod_name] = true
 
 			local ok, ids = pcall(dofile, opt.root .. "/mods/" .. mod_name)
 			if not ok then
