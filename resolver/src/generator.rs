@@ -5,7 +5,7 @@ use std::fs::{create_dir, File};
 use std::io::Write;
 
 /// vector to table.
-fn to_lua_table(v: &[&str]) -> String {
+fn to_lua_table(v: &Vec<&str>) -> String {
     v.iter()
         .fold(String::from("{"), |acc, x| acc + "'" + x + "',")
         + "}"
@@ -63,7 +63,11 @@ fn gen_config(config: &OboroConfig, root: &str) -> Result<()> {
         let mut plugin_file = File::create(&plugin_path)?;
         let mut plugins_file = File::create(&plugins_path)?;
         write!(cfg_file, "{}", plugin.config)?;
-        write!(deps_file, "return {}", to_lua_table(&plugin.deps))?;
+        write!(
+            deps_file,
+            "return {}",
+            to_lua_table(&([&plugin.deps[..], &plugin.dep_bundles[..]]).concat())
+        )?;
         write!(plugin_file, "return '{}'", plugin.id)?;
         write!(plugins_file, "return {{}}")?;
         println!("write: {}", &cfg_path);
@@ -87,7 +91,12 @@ fn gen_config(config: &OboroConfig, root: &str) -> Result<()> {
         let mut plugin_file = File::create(&plugin_path)?;
         let mut plugins_file = File::create(&plugins_path)?;
         write!(cfg_file, "{}", bundle.config)?;
-        write!(deps_file, "return {}", to_lua_table(&bundle.deps))?;
+        // write!(deps_file, "return {}", to_lua_table(bundle.deps))?;
+        write!(
+            deps_file,
+            "return {}",
+            to_lua_table(&([&bundle.deps[..], &bundle.dep_bundles[..]]).concat())
+        )?;
         write!(plugin_file, "return nil")?;
         write!(plugins_file, "return {}", to_lua_table(&bundle.plugins))?;
         println!("write: {}", &cfg_path);
