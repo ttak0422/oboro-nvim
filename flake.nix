@@ -25,8 +25,8 @@
       # "x86_64-linux"
       "x86_64-darwin"
       "aarch64-darwin"
-    ] 
-    # { } // flake-utils.lib.eachDefaultSystem 
+    ]
+    # { } // flake-utils.lib.eachDefaultSystem
     (system:
       let
         VERSION = "0.0.1";
@@ -66,7 +66,7 @@
                 (with pkgs; [ libiconv darwin.apple_sdk.frameworks.Security ])
                 ++ optionals (isDarwin && isx86_64)
                 (with pkgs; [ darwin.apple_sdk.frameworks.CoreFoundation ]);
-              cargoToml = ./Cargo.toml;
+              cargoToml = ./resolver/Cargo.toml;
               cargoVendorDir = null;
             };
           in args' // {
