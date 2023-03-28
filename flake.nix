@@ -26,7 +26,6 @@
       "x86_64-darwin"
       "aarch64-darwin"
     ]
-    # { } // flake-utils.lib.eachDefaultSystem
     (system:
       let
         VERSION = "0.0.1";

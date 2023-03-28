@@ -144,17 +144,6 @@ where
             })
         })
         .collect()
-    // xs.into_iter()
-    //     .into_group_map_by(|x| x.key())
-    //     .into_iter()
-    //     .map(|(_, v)| {
-    //         let def: T = Default::default();
-    //         v.into_iter().try_fold(def, |mut acc, mut x| {
-    //             acc.merge_into(&mut x)?;
-    //             Ok(acc)
-    //         })
-    //     })
-    //     .collect()
 }
 
 /// to Vec<&str>.
