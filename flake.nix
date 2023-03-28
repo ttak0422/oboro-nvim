@@ -25,8 +25,7 @@
       # "x86_64-linux"
       "x86_64-darwin"
       "aarch64-darwin"
-    ]
-    (system:
+    ] (system:
       let
         VERSION = "0.0.1";
 
@@ -68,9 +67,7 @@
               cargoToml = ./resolver/Cargo.toml;
               cargoVendorDir = null;
             };
-          in args' // {
-            cargoArtifacts = buildDepsOnly args';
-          };
+          in args' // { cargoArtifacts = buildDepsOnly args'; };
           resolver = buildPackage args;
           # TODO: optimized , normal
           vimPlugin = vimUtils.buildVimPlugin {
@@ -90,7 +87,8 @@
         };
       in {
         darwinModules = rec {
-          oboro-nvim = import ./nix/module.nix { inherit oboro nix-filter scripts; };
+          oboro-nvim =
+            import ./nix/module.nix { inherit oboro nix-filter scripts; };
           default = oboro-nvim;
         };
 
