@@ -45,7 +45,7 @@ in rec {
     lazyCoreConfig = let default = defaults.lazyCoreConfig;
     in {
       config = mkOption {
-        type = types.lines;
+        type = with types; either lines configDetail;
         default = default.config;
       };
       depends = mkOption {
@@ -106,6 +106,36 @@ in rec {
   # bundle default config.
   bundleConfigDefault = defaults.commonConfig // defaults.lazyCoreConfig
     // defaults.bundleConfig;
+
+  startupDetail = types.submodule {
+    options = {
+      lang = mkOption { type = types.enum [ "vim" "lua" ]; };
+      code = mkOption {
+        type = types.lines;
+        default = "";
+      };
+      args = mkOption {
+        type = types.attrs;
+        default = { };
+        description = "for lua";
+      };
+    };
+  };
+
+  configDetail = types.submodule {
+    options = {
+      lang = mkOption { type = types.enum [ "vim" "lua" ]; };
+      code = mkOption {
+        type = types.lines;
+        default = "";
+      };
+      args = mkOption {
+        type = types.attrs;
+        default = { };
+        description = "for lua";
+      };
+    };
+  };
 
   # `start` plugin config.
   startPluginConfig =
