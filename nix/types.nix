@@ -117,7 +117,6 @@ in rec {
       args = mkOption {
         type = types.attrs;
         default = { };
-        description = "for lua";
       };
     };
   };
@@ -132,7 +131,6 @@ in rec {
       args = mkOption {
         type = types.attrs;
         default = { };
-        description = "for lua";
       };
     };
   };
@@ -208,5 +206,4 @@ in rec {
       default = [ ];
     };
   };
-
 }

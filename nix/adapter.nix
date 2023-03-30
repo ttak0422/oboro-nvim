@@ -17,11 +17,18 @@ let
         ${x.code}
       '' else
         x.code
-    else if x ? lang && x.lang == "vim" then ''
-      vim.cmd([[
-        ${x.code}
-      ]])
-    '' else
+    else if x ? lang && x.lang == "vim" then
+      if x.args != { } then ''
+        vim.cmd([[
+          ${x.code}
+        ]])
+      '' else ''
+        vim.cmd([[
+          let s:args = json_decode('${toJSON x.args}')
+          ${x.code}
+        ]])
+      ''
+    else
       x;
 
   # make config.
@@ -36,11 +43,18 @@ let
         ${x.code}
       '' else
         x.code
-    else if x ? lang && x.lang == "vim" then ''
-      vim.cmd([[
-        ${x.code}
-      ]])
-    '' else
+    else if x ? lang && x.lang == "vim" then
+      if x.args != { } then ''
+        vim.cmd([[
+          let s:args = json_decode('${toJSON x.args}')
+          ${x.code}
+        ]])
+      '' else ''
+        vim.cmd([[
+          ${x.code}
+        ]])
+      ''
+    else
       x;
 in {
   # adapt to `StartPlugin`.
