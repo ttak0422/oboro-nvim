@@ -8,7 +8,7 @@ let
   inherit (import ./types.nix { inherit pkgs lib; })
     nvimConfig oboroPluginConfig;
   inherit (import ./adapter.nix { inherit pkgs lib; })
-    toStartPlugin toOptPlugin toBundle expandPlugin;
+    toStartPlugin toOptPlugin toBundle expandPlugin extractExtraPackages;
 
   cfg = config.programs.oboro-nvim;
 
@@ -17,11 +17,9 @@ let
     (flatten (map expandPlugin (cfg.optPlugins ++ cfg.bundles)));
   bundles = map toBundle cfg.bundles;
 
-  extraPackages = let
-    f = x: if x ? extraPackages then x.extraPackages else [ ];
-    g = map f;
-  in flatten (map g [ cfg.startPlugins cfg.optPlugins cfg.bundles ])
-  ++ cfg.extraPackages;
+  extraPackages = flatten
+    (map extractExtraPackages [ cfg.startPlugins cfg.optPlugins cfg.bundles ])
+    ++ cfg.extraPackages;
 
   oboroSetupCode = let
     configRoot = { inherit startPlugins optPlugins bundles; };

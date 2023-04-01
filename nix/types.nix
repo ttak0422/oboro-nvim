@@ -54,7 +54,7 @@ in rec {
         default = default.config;
       };
       depends = mkOption {
-        type = with types; listOf package;
+        type = with types; listOf (either package optPluginConfig);
         default = default.depends;
       };
       dependBundles = mkOption {
@@ -95,7 +95,7 @@ in rec {
         description = "bundle name";
       };
       plugins = mkOption {
-        type = with types; listOf package;
+        type = with types; listOf (either package optPluginConfig);
         default = default.plugins;
       };
     };

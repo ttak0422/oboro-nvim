@@ -1,9 +1,23 @@
 # Adapt nix configuration to formatted json (src/config/input.rs).
 { pkgs, lib }:
 let
+  inherit (lib) flatten;
   inherit (builtins) map toJSON;
   inherit (import ./types.nix { inherit pkgs lib; })
     startPluginConfigDefault optPluginConfigDefault bundleConfigDefault;
+
+  # extract id.
+  #
+  # Type:
+  # --------------------
+  # (package | optPluginConfig | bundleConfig) -> str;
+  extractId = x:
+    if x ? type' && x.type' == "plugin" then
+      x.plugin.pname
+    else if x ? type' && x.type' == "bundle" then
+      x.name
+    else
+      x.pname;
 
   # make config.
   #
@@ -56,7 +70,7 @@ let
       ''
     else
       x;
-in {
+in rec {
   # adapt to `StartPlugin`.
   #
   # Type:
@@ -85,7 +99,7 @@ in {
       startup = mkStartupCode plugin.startup;
       preConfig = mkConfigCode plugin.preConfig;
       config = mkConfigCode plugin.config;
-      deps = map (p: p.pname) plugin.depends;
+      deps = map extractId plugin.depends;
       depBundles = plugin.dependBundles;
       mods = plugin.modules;
       evs = plugin.events;
@@ -117,8 +131,8 @@ in {
       startup = mkStartupCode bundle.startup;
       preConfig = mkConfigCode bundle.preConfig;
       config = mkConfigCode bundle.config;
-      plugins = map (p: p.pname) bundle.plugins;
-      deps = map (p: p.pname) bundle.depends;
+      plugins = map extractId bundle.plugins;
+      deps = map extractId bundle.depends;
       depBundles = bundle.dependBundles;
       mods = bundle.modules;
       evs = bundle.events;
@@ -142,12 +156,23 @@ in {
   #
   # Type:
   # --------------------
-  # (package | optPluginConfig | bundleConfig) -> with types; listOf (either package optPluginConfig)
+  # (package | optPluginConfig | bundleConfig) -> List[package | optPluginConfig]
   expandPlugin = x:
     if x ? type' && x.type' == "plugin" then
-      [ x ] ++ x.depends
+      let depends = if x ? depends then x.depends else [ ];
+      in flatten ([ x ] ++ (map expandPlugin depends))
     else if x ? type' && x.type' == "bundle" then
-      x.plugins ++ x.depends
+      let depends = if x ? depends then x.depends else [ ];
+      in flatten (map expandPlugin (x.plugins ++ depends))
     else
       [ x ];
+
+  # extract extraPackages.
+  #
+  # Type:
+  # --------------------
+  # (package | optPluginConfig | bundleConfig) -> List[extraPackage]
+  extractExtraPackages = x:
+    flatten ((map (y: if y ? extraPackages then y.extraPackages else [ ]))
+      (flatten (map expandPlugin x)));
 }
