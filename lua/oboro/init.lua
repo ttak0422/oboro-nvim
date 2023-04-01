@@ -16,9 +16,15 @@
 -- lazy .............................. plugin id table to be loaded using timer.
 -- startup ........................... startup config.
 
+---@type { [string]: boolean }
 local loaded_plugins = {}
+---@type { [string]: boolean }
 local loaded_mods = {}
 
+--- do configure.
+---@param opt { root: string, lazy_time: number } plugin option
+---@param id string plugin id
+---@param is_pre boolean isPreconfig
 local function configure(opt, id, is_pre)
 	local path = is_pre and "/pre_cfgs/" or "/cfgs/"
 	local ok, err_msg = pcall(dofile, opt.root .. path .. id)
@@ -27,7 +33,9 @@ local function configure(opt, id, is_pre)
 	end
 end
 
--- load plugin.
+--- load plugin.
+---@param opt { root: string, lazy_time: number } plugin option
+---@param id string plugin id
 local function load(opt, id)
 	if loaded_plugins[id] then
 		return nil
