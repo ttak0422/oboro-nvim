@@ -18,6 +18,8 @@ pub struct OptPlugin {
     pub plugin: String,
     /// lua code execute at startup.
     pub startup: String,
+    /// lua code execute before load.
+    pub pre_config: String,
     /// lua code execute on load.
     pub config: String,
     /// plugin dependencies.
@@ -44,6 +46,8 @@ pub struct Bundle {
     pub plugins: Vec<String>,
     /// lua code execute at startup.
     pub startup: String,
+    /// lua code execute before load.
+    pub pre_config: String,
     /// lua code execute on load.
     pub config: String,
     /// plugin dependencies.

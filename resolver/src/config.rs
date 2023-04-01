@@ -85,6 +85,7 @@ impl Mergeable for LazyPlugin<'_> {
         self.id.merge_into(&mut other.id)?;
         self.plugin.merge_into(&mut other.plugin)?;
         self.startup.merge_into(&mut other.startup)?;
+        self.pre_config.merge_into(&mut other.pre_config)?;
         self.config.merge_into(&mut other.config)?;
         self.deps.merge_into(&mut other.deps)?;
         self.dep_bundles.merge_into(&mut other.dep_bundles)?;
@@ -103,6 +104,7 @@ impl Mergeable for Bundle<'_> {
         self.id.merge_into(&mut other.id)?;
         self.plugins.merge_into(&mut other.plugins)?;
         self.startup.merge_into(&mut other.startup)?;
+        self.pre_config.merge_into(&mut other.pre_config)?;
         self.config.merge_into(&mut other.config)?;
         self.deps.merge_into(&mut other.deps)?;
         self.dep_bundles.merge_into(&mut other.dep_bundles)?;
@@ -193,6 +195,7 @@ fn map(config: &OboroPluginConfig) -> OboroConfig<'_> {
             id: &plugin.id,
             plugin: &plugin.plugin,
             startup: &plugin.startup,
+            pre_config: &&plugin.pre_config,
             config: &plugin.config,
             deps: to_str_vector(&plugin.deps),
             dep_bundles: to_str_vector(&plugin.dep_bundles),
@@ -221,6 +224,7 @@ fn map(config: &OboroPluginConfig) -> OboroConfig<'_> {
             id: &bundle.id,
             plugins: to_str_vector(&bundle.plugins),
             startup: &bundle.startup,
+            pre_config: &bundle.pre_config,
             config: &bundle.config,
             deps: to_str_vector(&bundle.deps),
             dep_bundles: to_str_vector(&bundle.dep_bundles),
@@ -445,26 +449,31 @@ mod tests {
 
     #[rstest(arg_x, arg_y, exp,
         case(
-            LazyPlugin { id : "foo", plugin : "plugin", startup: "startup", config: "config", deps: vec!["bar"], dep_bundles: vec!["baz"] },
-            LazyPlugin { id : "foo", plugin : "",       startup: "",        config: "config", deps: vec![],      dep_bundles: vec![] },
-            LazyPlugin { id : "foo", plugin : "plugin", startup: "startup", config: "config", deps: vec!["bar"], dep_bundles: vec!["baz"] },
+            LazyPlugin { id : "foo", plugin : "plugin", startup: "startup",pre_config: "preconfig", config: "config", deps: vec!["bar"], dep_bundles: vec!["baz"] },
+            LazyPlugin { id : "foo", plugin : "",       startup: "",       pre_config: "preconfig", config: "config", deps: vec![],      dep_bundles: vec![] },
+            LazyPlugin { id : "foo", plugin : "plugin", startup: "startup",pre_config: "preconfig", config: "config", deps: vec!["bar"], dep_bundles: vec!["baz"] },
         ),
         case(
-            LazyPlugin { id : "foo", plugin : "",       startup: "",        config: "config", deps: vec![],      dep_bundles: vec![] },
-            LazyPlugin { id : "foo", plugin : "plugin", startup: "startup", config: "config", deps: vec!["bar"], dep_bundles: vec!["baz"] },
-            LazyPlugin { id : "foo", plugin : "plugin", startup: "startup", config: "config", deps: vec!["bar"], dep_bundles: vec!["baz"] },
+            LazyPlugin { id : "foo", plugin : "",       startup: "",       pre_config: "", config: "", deps: vec![],      dep_bundles: vec![] },
+            LazyPlugin { id : "foo", plugin : "plugin", startup: "startup",pre_config: "preconfig", config: "config", deps: vec!["bar"], dep_bundles: vec!["baz"] },
+            LazyPlugin { id : "foo", plugin : "plugin", startup: "startup",pre_config: "preconfig", config: "config", deps: vec!["bar"], dep_bundles: vec!["baz"] },
+        ),
+        case(
+            LazyPlugin { id : "foo", plugin : "plugin", startup: "startup",pre_config: "preconfig", config: "config", deps: vec!["bar"], dep_bundles: vec!["baz"] },
+            LazyPlugin { id : "foo", plugin : "",       startup: "",       pre_config: "", config: "", deps: vec![],      dep_bundles: vec![] },
+            LazyPlugin { id : "foo", plugin : "plugin", startup: "startup",pre_config: "preconfig", config: "config", deps: vec!["bar"], dep_bundles: vec!["baz"] },
         ),
         #[should_panic]
         case(
-            LazyPlugin { id : "foo",  plugin : "plugin", startup: "startup", config: "config", deps: vec!["bar"], dep_bundles: vec!["baz"] },
-            LazyPlugin { id : "hoge", plugin : "",       startup: "",        config: "",       deps: vec![],      dep_bundles: vec![] },
-            LazyPlugin { id : "_",    plugin : "_",      startup: "_",       config: "_",      deps: vec![],      dep_bundles: vec![] }
+            LazyPlugin { id : "foo",  plugin : "plugin", startup: "startup", pre_config: "preconfig", config: "config", deps: vec!["bar"], dep_bundles: vec!["baz"] },
+            LazyPlugin { id : "hoge", plugin : "",       startup: "",        pre_config: "_", config: "",       deps: vec![],      dep_bundles: vec![] },
+            LazyPlugin { id : "_",    plugin : "_",      startup: "_",       pre_config: "_", config: "_",      deps: vec![],      dep_bundles: vec![] }
         ),
         #[should_panic]
         case(
-            LazyPlugin { id : "foo", plugin : "_", startup: "_", config: "_", deps: vec!["conflict_foo1"], dep_bundles: vec![] },
-            LazyPlugin { id : "foo", plugin : "_", startup: "_", config: "_", deps: vec!["conflict_foo2"], dep_bundles: vec![] },
-            LazyPlugin { id : "_",   plugin : "_", startup: "_", config: "_", deps: vec![],                dep_bundles: vec![] }
+            LazyPlugin { id : "foo", plugin : "_", startup: "_", pre_config: "_", config: "_", deps: vec!["conflict_foo1"], dep_bundles: vec![] },
+            LazyPlugin { id : "foo", plugin : "_", startup: "_", pre_config: "_", config: "_", deps: vec!["conflict_foo2"], dep_bundles: vec![] },
+            LazyPlugin { id : "_",   plugin : "_", startup: "_", pre_config: "_", config: "_", deps: vec![],                dep_bundles: vec![] }
         ),
     )]
     fn merge_lazy(arg_x: LazyPlugin, arg_y: LazyPlugin, exp: LazyPlugin) {
@@ -481,26 +490,26 @@ mod tests {
 
     #[rstest(arg_x, arg_y, exp,
         case(
-            Bundle { id : "foo", plugins : vec!["plugins"], startup: "startup", config: "config", deps: vec!["bar"], dep_bundles: vec!["baz"] },
-            Bundle { id : "foo", plugins : vec![],          startup: "",        config: "config", deps: vec![],      dep_bundles: vec![] },
-            Bundle { id : "foo", plugins : vec!["plugins"], startup: "startup", config: "config", deps: vec!["bar"], dep_bundles: vec!["baz"] },
+            Bundle { id : "foo", plugins : vec!["plugins"], startup: "startup", pre_config: "preconfig", config: "config", deps: vec!["bar"], dep_bundles: vec!["baz"] },
+            Bundle { id : "foo", plugins : vec![],          startup: "",        pre_config: "", config: "config", deps: vec![],      dep_bundles: vec![] },
+            Bundle { id : "foo", plugins : vec!["plugins"], startup: "startup", pre_config: "preconfig", config: "config", deps: vec!["bar"], dep_bundles: vec!["baz"] },
         ),
         case(
-            Bundle { id : "foo", plugins : vec![],          startup: "",        config: "config", deps: vec![],      dep_bundles: vec![] },
-            Bundle { id : "foo", plugins : vec!["plugins"], startup: "startup", config: "config", deps: vec!["bar"], dep_bundles: vec!["baz"] },
-            Bundle { id : "foo", plugins : vec!["plugins"], startup: "startup", config: "config", deps: vec!["bar"], dep_bundles: vec!["baz"] },
-        ),
-        #[should_panic]
-        case(
-            Bundle { id : "foo",  plugins : vec!["plugins"], startup: "startup", config: "config", deps: vec!["bar"], dep_bundles: vec!["baz"] },
-            Bundle { id : "hoge", plugins : vec![],          startup: "",        config: "",       deps: vec![],      dep_bundles: vec![] },
-            Bundle { id : "_",    plugins : vec![],          startup: "_",       config: "_",      deps: vec![],      dep_bundles: vec![] }
+            Bundle { id : "foo", plugins : vec![],          startup: "",        pre_config: "", config: "config", deps: vec![],      dep_bundles: vec![] },
+            Bundle { id : "foo", plugins : vec!["plugins"], startup: "startup", pre_config: "preconfig", config: "config", deps: vec!["bar"], dep_bundles: vec!["baz"] },
+            Bundle { id : "foo", plugins : vec!["plugins"], startup: "startup", pre_config: "preconfig", config: "config", deps: vec!["bar"], dep_bundles: vec!["baz"] },
         ),
         #[should_panic]
         case(
-            Bundle { id : "foo", plugins : vec![], startup: "_", config: "_", deps: vec!["conflict_foo1"], dep_bundles: vec![] },
-            Bundle { id : "foo", plugins : vec![], startup: "_", config: "_", deps: vec!["conflict_foo2"], dep_bundles: vec![] },
-            Bundle { id : "_",   plugins : vec![], startup: "_", config: "_", deps: vec![], dep_bundles: vec![] }
+            Bundle { id : "foo",  plugins : vec!["plugins"], startup: "startup", pre_config: "preconfig", config: "config", deps: vec!["bar"], dep_bundles: vec!["baz"] },
+            Bundle { id : "hoge", plugins : vec![],          startup: "",        pre_config: "", config: "",       deps: vec![],      dep_bundles: vec![] },
+            Bundle { id : "_",    plugins : vec![],          startup: "_",       pre_config: "_", config: "_",      deps: vec![],      dep_bundles: vec![] }
+        ),
+        #[should_panic]
+        case(
+            Bundle { id : "foo", plugins : vec![], startup: "_", pre_config: "_", config: "_", deps: vec!["conflict_foo1"], dep_bundles: vec![] },
+            Bundle { id : "foo", plugins : vec![], startup: "_", pre_config: "_", config: "_", deps: vec!["conflict_foo2"], dep_bundles: vec![] },
+            Bundle { id : "_",   plugins : vec![], startup: "_", pre_config: "_", config: "_", deps: vec![], dep_bundles: vec![] }
         ),
     )]
     fn merge_bundle(arg_x: Bundle, arg_y: Bundle, exp: Bundle) {
@@ -545,14 +554,14 @@ mod tests {
     #[rstest(arg, exp,
         case(
             vec![
-                LazyPlugin { id : "foo", plugin : "", startup: "", config: "", deps: vec![], dep_bundles: vec![] },
-                LazyPlugin { id : "bar", plugin : "", startup: "", config: "", deps: vec![], dep_bundles: vec![] },
-                LazyPlugin { id : "foo", plugin : "foo plugin", startup: "foo startup", config: "foo config", deps: vec!["foo"], dep_bundles: vec!["foo_dep"] },
-                LazyPlugin { id : "bar", plugin : "bar plugin", startup: "bar startup", config: "bar config", deps: vec!["foo"], dep_bundles: vec!["bar_dep"] },
+                LazyPlugin { id : "foo", plugin : "", startup: "", pre_config: "", config: "", deps: vec![], dep_bundles: vec![] },
+                LazyPlugin { id : "bar", plugin : "", startup: "", pre_config: "", config: "", deps: vec![], dep_bundles: vec![] },
+                LazyPlugin { id : "foo", plugin : "foo plugin", startup: "foo startup", pre_config: "foo pre config", config: "foo config", deps: vec!["foo"], dep_bundles: vec!["foo_dep"] },
+                LazyPlugin { id : "bar", plugin : "bar plugin", startup: "bar startup", pre_config: "bar pre config", config: "bar config", deps: vec!["foo"], dep_bundles: vec!["bar_dep"] },
             ],
             vec![
-                LazyPlugin { id : "foo", plugin : "foo plugin", startup: "foo startup", config: "foo config", deps: vec!["foo"], dep_bundles: vec!["foo_dep"] },
-                LazyPlugin { id : "bar", plugin : "bar plugin", startup: "bar startup", config: "bar config", deps: vec!["foo"], dep_bundles: vec!["bar_dep"] },
+                LazyPlugin { id : "foo", plugin : "foo plugin", startup: "foo startup", pre_config: "foo pre config", config: "foo config", deps: vec!["foo"], dep_bundles: vec!["foo_dep"] },
+                LazyPlugin { id : "bar", plugin : "bar plugin", startup: "bar startup", pre_config: "bar pre config", config: "bar config", deps: vec!["foo"], dep_bundles: vec!["bar_dep"] },
             ],
         ),
         case(vec![],vec![]),
@@ -572,14 +581,14 @@ mod tests {
     #[rstest(arg, exp,
         case(
             vec![
-                Bundle { id : "foo", plugins : vec![], startup: "", config: "", deps: vec![], dep_bundles: vec![] },
-                Bundle { id : "bar", plugins : vec![], startup: "", config: "", deps: vec![], dep_bundles: vec![] },
-                Bundle { id : "foo", plugins : vec!["foo_plugins"], startup: "foo startup", config: "foo config", deps: vec!["foo"], dep_bundles: vec!["foo_dep"] },
-                Bundle { id : "bar", plugins : vec!["bar_plugins"], startup: "bar startup", config: "bar config", deps: vec!["foo"], dep_bundles: vec!["bar_dep"] },
+                Bundle { id : "foo", plugins : vec![], startup: "", pre_config: "", config: "", deps: vec![], dep_bundles: vec![] },
+                Bundle { id : "bar", plugins : vec![], startup: "", pre_config: "", config: "", deps: vec![], dep_bundles: vec![] },
+                Bundle { id : "foo", plugins : vec!["foo_plugins"], startup: "foo startup", pre_config: "foo pre config", config: "foo config", deps: vec!["foo"], dep_bundles: vec!["foo_dep"] },
+                Bundle { id : "bar", plugins : vec!["bar_plugins"], startup: "bar startup", pre_config: "bar pre config", config: "bar config", deps: vec!["foo"], dep_bundles: vec!["bar_dep"] },
             ],
             vec![
-                Bundle { id : "foo", plugins : vec!["foo_plugins"], startup: "foo startup", config: "foo config", deps: vec!["foo"], dep_bundles: vec!["foo_dep"] },
-                Bundle { id : "bar", plugins : vec!["bar_plugins"], startup: "bar startup", config: "bar config", deps: vec!["foo"], dep_bundles: vec!["bar_dep"] },
+                Bundle { id : "foo", plugins : vec!["foo_plugins"], startup: "foo startup", pre_config: "foo pre config", config: "foo config", deps: vec!["foo"], dep_bundles: vec!["foo_dep"] },
+                Bundle { id : "bar", plugins : vec!["bar_plugins"], startup: "bar startup", pre_config: "bar pre config", config: "bar config", deps: vec!["foo"], dep_bundles: vec!["bar_dep"] },
             ],
         ),
         case(vec![],vec![]),
@@ -644,6 +653,7 @@ mod tests {
                     id: String::from("bar"),
                     plugin: String::from("bar_plugin"),
                     startup: String::from("bar startup"),
+                    pre_config: String::from("bar pre config"),
                     config: String::from("bar config"),
                     deps: vec![String::from("baz")],
                     dep_bundles: vec![String::from("hoge")],
@@ -675,6 +685,7 @@ mod tests {
                     id: String::from("hoge"),
                     plugins: vec![String::from("bar"), String::from("qux")],
                     startup: String::from("hoge startup"),
+                    pre_config: String::from("hoge pre config"),
                     config: String::from("hoge config"),
                     deps: vec![String::from("quux")],
                     dep_bundles: vec![String::from("huga")],
@@ -705,6 +716,7 @@ mod tests {
                     id: "bar",
                     plugin: "bar_plugin",
                     startup: "bar startup",
+                    pre_config: "bar pre config",
                     config: "bar config",
                     deps: vec!["baz"],
                     dep_bundles: vec!["hoge"],
@@ -731,6 +743,7 @@ mod tests {
                     id: "hoge",
                     plugins: vec!["bar", "qux"],
                     startup: "hoge startup",
+                    pre_config: "hoge pre config",
                     config: "hoge config",
                     deps: vec!["quux"],
                     dep_bundles: vec!["huga"],

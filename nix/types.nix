@@ -8,6 +8,7 @@ in rec {
       extraPackages = [ ];
     };
     lazyCoreConfig = {
+      preConfig = "";
       config = "";
       depends = [ ];
       dependBundles = [ ];
@@ -44,6 +45,10 @@ in rec {
     };
     lazyCoreConfig = let default = defaults.lazyCoreConfig;
     in {
+      preConfig = mkOption {
+        type = with types; either lines configDetail;
+        default = default.preConfig;
+      };
       config = mkOption {
         type = with types; either lines configDetail;
         default = default.config;

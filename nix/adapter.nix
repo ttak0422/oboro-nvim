@@ -83,6 +83,7 @@ in {
       inherit (plugin) plugin lazy;
       id = plugin.plugin.pname;
       startup = mkStartupCode plugin.startup;
+      preConfig = mkConfigCode plugin.preConfig;
       config = mkConfigCode plugin.config;
       deps = map (p: p.pname) plugin.depends;
       depBundles = plugin.dependBundles;
@@ -94,7 +95,7 @@ in {
       let default = optPluginConfigDefault;
       in {
         inherit plugin;
-        inherit (default) startup config lazy;
+        inherit (default) startup preConfig config lazy;
         id = plugin.pname;
         deps = default.depends;
         depBundles = default.dependBundles;
@@ -114,6 +115,7 @@ in {
       inherit (bundle) lazy;
       id = bundle.name;
       startup = mkStartupCode bundle.startup;
+      preConfig = mkConfigCode bundle.preConfig;
       config = mkConfigCode bundle.config;
       plugins = map (p: p.pname) bundle.plugins;
       deps = map (p: p.pname) bundle.depends;
@@ -125,7 +127,7 @@ in {
     } else
       let default = bundleConfigDefault;
       in {
-        inherit (default) start config lazy;
+        inherit (default) start preConfig config lazy;
         id = bundle;
         plugins = default.plugins;
         deps = default.depends;

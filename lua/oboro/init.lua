@@ -1,7 +1,8 @@
 -- configurations.
 --
--- plugin/<PLUGIN_ID> .... plugin id (nil or string).
--- plugins/<BUNDLE_ID> ... plugins id table.
+-- plugin/<PLUGIN_ID> ................ plugin id (nil or string).
+-- plugins/<BUNDLE_ID> ............... plugins id table.
+-- pre_cfg/<PLUGIN_ID | BUNDLE_ID> ... config.
 -- cfg/<PLUGIN_ID | BUNDLE_ID> ....... config.
 -- deps/<PLUGIN_ID | BUNDLE_ID> ...... depends plugin id table.
 -- mods/<MODULE> ..................... plugin id table on require `<MODULE>`.
@@ -18,8 +19,9 @@
 local loaded_plugins = {}
 local loaded_mods = {}
 
-local function configure(opt, id)
-	local ok, err_msg = pcall(dofile, opt.root .. "/cfgs/" .. id)
+local function configure(opt, id, is_pre)
+	local path = is_pre and "/pre_cfgs/" or "/cfgs/"
+	local ok, err_msg = pcall(dofile, opt.root .. path .. id)
 	if not ok then
 		print("[" .. id .. "] configure error: " .. (err_msg or "-- no msg --"))
 	end
@@ -31,6 +33,8 @@ local function load(opt, id)
 		return nil
 	end
 	loaded_plugins[id] = true
+
+	configure(opt, id, true)
 
 	for _, dep in ipairs(dofile(opt.root .. "/deps/" .. id)) do
 		load(opt, dep)
@@ -45,7 +49,7 @@ local function load(opt, id)
 		load(opt, p)
 	end
 
-	configure(opt, id)
+	configure(opt, id, false)
 end
 
 return {

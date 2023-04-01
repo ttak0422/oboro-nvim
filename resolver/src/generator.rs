@@ -47,6 +47,7 @@ fn gen_startup(config: &OboroConfig, root: &str) -> Result<()> {
 /// generate configs.
 fn gen_config(config: &OboroConfig, root: &str) -> Result<()> {
     // setup
+    create_dir(String::from(root) + "/pre_cfgs")?;
     create_dir(String::from(root) + "/cfgs")?;
     create_dir(String::from(root) + "/deps")?;
     create_dir(String::from(root) + "/plugin")?;
@@ -54,14 +55,17 @@ fn gen_config(config: &OboroConfig, root: &str) -> Result<()> {
 
     // lazy
     for plugin in config.lazy_plugins.iter() {
+        let pre_cfg_path = String::from(root) + "/pre_cfgs/" + plugin.id;
         let cfg_path = String::from(root) + "/cfgs/" + plugin.id;
         let deps_path = String::from(root) + "/deps/" + plugin.id;
         let plugin_path = String::from(root) + "/plugin/" + plugin.id;
         let plugins_path = String::from(root) + "/plugins/" + plugin.id;
+        let mut pre_cfg_file = File::create(&pre_cfg_path)?;
         let mut cfg_file = File::create(&cfg_path)?;
         let mut deps_file = File::create(&deps_path)?;
         let mut plugin_file = File::create(&plugin_path)?;
         let mut plugins_file = File::create(&plugins_path)?;
+        write!(pre_cfg_file, "{}", plugin.pre_config)?;
         write!(cfg_file, "{}", plugin.config)?;
         write!(
             deps_file,
@@ -70,10 +74,12 @@ fn gen_config(config: &OboroConfig, root: &str) -> Result<()> {
         )?;
         write!(plugin_file, "return '{}'", plugin.id)?;
         write!(plugins_file, "return {{}}")?;
+        println!("write: {}", &pre_cfg_path);
         println!("write: {}", &cfg_path);
         println!("write: {}", &deps_path);
         println!("write: {}", &plugin_path);
         println!("write: {}", &plugins_path);
+        pre_cfg_file.flush().map_err(|err| anyhow!(err))?;
         cfg_file.flush().map_err(|err| anyhow!(err))?;
         deps_file.flush().map_err(|err| anyhow!(err))?;
         plugin_file.flush().map_err(|err| anyhow!(err))?;
@@ -82,14 +88,17 @@ fn gen_config(config: &OboroConfig, root: &str) -> Result<()> {
 
     // bundle
     for bundle in config.bundles.iter() {
+        let pre_cfg_path = String::from(root) + "/pre_cfgs/" + bundle.id;
         let cfg_path = String::from(root) + "/cfgs/" + bundle.id;
         let deps_path = String::from(root) + "/deps/" + bundle.id;
         let plugin_path = String::from(root) + "/plugin/" + bundle.id;
         let plugins_path = String::from(root) + "/plugins/" + bundle.id;
+        let mut pre_cfg_file = File::create(&pre_cfg_path)?;
         let mut cfg_file = File::create(&cfg_path)?;
         let mut deps_file = File::create(&deps_path)?;
         let mut plugin_file = File::create(&plugin_path)?;
         let mut plugins_file = File::create(&plugins_path)?;
+        write!(pre_cfg_file, "{}", bundle.pre_config)?;
         write!(cfg_file, "{}", bundle.config)?;
         // write!(deps_file, "return {}", to_lua_table(bundle.deps))?;
         write!(
@@ -99,10 +108,12 @@ fn gen_config(config: &OboroConfig, root: &str) -> Result<()> {
         )?;
         write!(plugin_file, "return nil")?;
         write!(plugins_file, "return {}", to_lua_table(&bundle.plugins))?;
+        println!("write: {}", &pre_cfg_path);
         println!("write: {}", &cfg_path);
         println!("write: {}", &deps_path);
         println!("write: {}", &plugin_path);
         println!("write: {}", &plugins_path);
+        pre_cfg_file.flush().map_err(|err| anyhow!(err))?;
         cfg_file.flush().map_err(|err| anyhow!(err))?;
         deps_file.flush().map_err(|err| anyhow!(err))?;
         plugin_file.flush().map_err(|err| anyhow!(err))?;
