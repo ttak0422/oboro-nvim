@@ -33,7 +33,7 @@ in rec {
         visible = false;
       };
       startup = mkOption {
-        type = types.lines;
+        type = with types; either lines startupDetail;
         default = default.startup;
       };
       extraPackages = mkOption {
