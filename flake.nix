@@ -19,7 +19,8 @@
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils, fenix, crane, ... }@inputs:
+  outputs =
+    { self, nixpkgs, flake-utils, fenix, crane, ... }@inputs:
     flake-utils.lib.eachSystem [
       # TODO: support linux
       # "x86_64-linux"
@@ -31,10 +32,9 @@
 
         pkgs = import nixpkgs {
           inherit system;
-          # TODO: nix-filterの挙動調査
-          overlays = [ fenix.overlays.default ];
+          overlays =
+            [ fenix.overlays.default inputs.nix-filter.overlays.default ];
         };
-        nix-filter = inputs.nix-filter.lib;
         craneLib = crane.lib.${system};
         toolchain = pkgs.fenix.complete.withComponents [
           "cargo"
@@ -44,9 +44,9 @@
         ];
 
         inherit (builtins) readFile;
-        inherit (pkgs) vimUtils;
+        inherit (pkgs) vimUtils nix-filter;
         inherit (pkgs.writers) writePython3Bin;
-        inherit (pkgs.lib) optionals runTests;
+        inherit (pkgs.lib) optionals;
         inherit (pkgs.stdenv) isDarwin isx86_64;
         inherit (craneLib.overrideToolchain toolchain)
           buildDepsOnly buildPackage cargoClippy cargoFmt cargoNextest;
