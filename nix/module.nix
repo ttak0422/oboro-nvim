@@ -1,9 +1,11 @@
 { nix-filter, oboro, scripts }:
 { config, pkgs, lib, ... }:
 let
-  inherit (builtins) toJSON;
+  inherit (builtins) toJSON map;
   inherit (pkgs) writeText stdenv;
   inherit (lib) mkIf mkEnableOption flatten;
+  inherit (lib.strings) concatStringsSep;
+  inherit (lib.lists) unique;
   inherit (stdenv) mkDerivation;
   inherit (import ./types.nix { inherit pkgs lib; })
     nvimConfig oboroPluginConfig;
@@ -21,9 +23,22 @@ let
     (map extractExtraPackages [ cfg.startPlugins cfg.optPlugins cfg.bundles ])
     ++ cfg.extraPackages;
 
+  oboroJson = writeText "oboro.json"
+    (toJSON { inherit startPlugins optPlugins bundles; });
+
+  oboroStats = let
+    startPackagesStr = concatStringsSep "\n" ([ "- start plugins" ]
+      ++ (map (p: "  ${p.plugin}") (unique startPlugins)));
+    optPackagesStr = concatStringsSep "\n"
+      ([ "- opt plugins" ] ++ (map (p: "  ${p.plugin}") (unique optPlugins)));
+  in writeText "stats.txt" ''
+    - json (nix → rust)
+      ${oboroJson}
+    ${startPackagesStr}
+    ${optPackagesStr}
+  '';
+
   oboroSetupCode = let
-    configRoot = { inherit startPlugins optPlugins bundles; };
-    oboroJson = writeText "oboro.json" (toJSON configRoot);
     oboroRoot = mkDerivation {
       pname = "oboro-config-root";
       version = oboro.version;
@@ -59,6 +74,7 @@ in {
       }) optPlugins);
     };
     xdg.configFile."nvim/init.lua".text = lib.mkAfter ''
+      -- stats (${oboroStats})
       ${cfg.extraConfig}
       ${oboroSetupCode}
     '';
