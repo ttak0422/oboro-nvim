@@ -1,3 +1,5 @@
+local M = {}
+
 -- configurations.
 --
 -- plugin/<PLUGIN_ID> ................ plugin id (nil or string).
@@ -16,13 +18,17 @@
 -- lazy .............................. plugin id table to be loaded using timer.
 -- startup ........................... startup config.
 
+---@class oboro-nvim.Opts
+---@field public root string
+---@field public lazy_time number
+
 ---@type { [string]: boolean }
 local loaded_plugins = {}
 ---@type { [string]: boolean }
 local loaded_mods = {}
 
 --- do configure.
----@param opt { root: string, lazy_time: number } plugin option
+---@param opt oboro-nvim.Opts plugin option
 ---@param id string plugin id
 ---@param is_pre boolean isPreconfig
 local function configure(opt, id, is_pre)
@@ -34,7 +40,7 @@ local function configure(opt, id, is_pre)
 end
 
 --- load plugin.
----@param opt { root: string, lazy_time: number } plugin option
+---@param opt oboro-nvim.Opts plugin option
 ---@param id string plugin id
 local function load(opt, id)
 	if loaded_plugins[id] then
@@ -60,76 +66,77 @@ local function load(opt, id)
 	configure(opt, id, false)
 end
 
-return {
-	setup = function(opt)
-		dofile(opt.root .. "/startup")
+---@param opt oboro-nvim.Opts plugin option
+M.setup = function(opt)
+	dofile(opt.root .. "/startup")
 
-		vim.api.nvim_create_augroup("oboro", { clear = true })
+	vim.api.nvim_create_augroup("oboro", { clear = true })
 
-		-- setup event loader
-		for _, ev in ipairs(dofile(opt.root .. "/ev_tbl")) do
-			vim.api.nvim_create_autocmd({ ev }, {
-				group = "oboro",
-				pattern = "*",
-				once = true,
-				callback = function()
-					for _, id in ipairs(dofile(opt.root .. "/evs/" .. ev)) do
-						load(opt, id)
-					end
-				end,
-			})
+	-- setup event loader
+	for _, ev in ipairs(dofile(opt.root .. "/ev_tbl")) do
+		vim.api.nvim_create_autocmd({ ev }, {
+			group = "oboro",
+			pattern = "*",
+			once = true,
+			callback = function()
+				for _, id in ipairs(dofile(opt.root .. "/evs/" .. ev)) do
+					load(opt, id)
+				end
+			end,
+		})
+	end
+
+	-- setup filetype loader
+	for _, ft in ipairs(dofile(opt.root .. "/ft_tbl")) do
+		vim.api.nvim_create_autocmd({ "FileType" }, {
+			group = "oboro",
+			pattern = ft,
+			once = true,
+			callback = function()
+				for _, id in ipairs(dofile(opt.root .. "/fts/" .. ft)) do
+					load(opt, id)
+				end
+			end,
+		})
+	end
+
+	-- setup command loader
+	for _, cmd in ipairs(dofile(opt.root .. "/cmd_tbl")) do
+		vim.api.nvim_create_autocmd({ "CmdUndefined" }, {
+			group = "oboro",
+			pattern = cmd,
+			once = true,
+			callback = function()
+				for _, id in ipairs(dofile(opt.root .. "/cmds/" .. cmd)) do
+					load(opt, id)
+				end
+			end,
+		})
+	end
+
+	-- setup module loader
+	table.insert(package.loaders, 1, function(mod_name)
+		if loaded_mods[mod_name] then
+			return nil
+		end
+		loaded_mods[mod_name] = true
+
+		local ok, ids = pcall(dofile, opt.root .. "/mods/" .. mod_name)
+		if not ok then
+			return nil
 		end
 
-		-- setup filetype loader
-		for _, ft in ipairs(dofile(opt.root .. "/ft_tbl")) do
-			vim.api.nvim_create_autocmd({ "FileType" }, {
-				group = "oboro",
-				pattern = ft,
-				once = true,
-				callback = function()
-					for _, id in ipairs(dofile(opt.root .. "/fts/" .. ft)) do
-						load(opt, id)
-					end
-				end,
-			})
+		for _, id in ipairs(ids) do
+			load(opt, id)
 		end
+	end)
 
-		-- setup command loader
-		for _, cmd in ipairs(dofile(opt.root .. "/cmd_tbl")) do
-			vim.api.nvim_create_autocmd({ "CmdUndefined" }, {
-				group = "oboro",
-				pattern = cmd,
-				once = true,
-				callback = function()
-					for _, id in ipairs(dofile(opt.root .. "/cmds/" .. cmd)) do
-						load(opt, id)
-					end
-				end,
-			})
+	-- setup lazy loader
+	vim.defer_fn(function()
+		for _, id in ipairs(dofile(opt.root .. "/lazy")) do
+			load(opt, id)
 		end
+	end, opt.lazy_time)
+end
 
-		-- setup module loader
-		table.insert(package.loaders, 1, function(mod_name)
-			if loaded_mods[mod_name] then
-				return nil
-			end
-			loaded_mods[mod_name] = true
-
-			local ok, ids = pcall(dofile, opt.root .. "/mods/" .. mod_name)
-			if not ok then
-				return nil
-			end
-
-			for _, id in ipairs(ids) do
-				load(opt, id)
-			end
-		end)
-
-		-- setup lazy loader
-		vim.defer_fn(function()
-			for _, id in ipairs(dofile(opt.root .. "/lazy")) do
-				load(opt, id)
-			end
-		end, opt.lazy_time)
-	end,
-}
+return M
