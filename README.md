@@ -61,7 +61,7 @@ Neovim configuration manager for Nix.
             rt.inlay_hints.enable()
 
             vim.cmd([[LspStart]])
-          ''
+          '';
           args = {
             on_attach_path = ./shared/on_attach.lua;
             capabilities_path = ./shared/capabilities.lua;
