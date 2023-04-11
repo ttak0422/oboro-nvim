@@ -44,7 +44,7 @@
         ];
 
         inherit (builtins) readFile;
-        inherit (pkgs) vimUtils nix-filter;
+        inherit (pkgs) vimUtils nix-filter callPackage;
         inherit (pkgs.writers) writePython3Bin;
         inherit (pkgs.lib) optionals;
         inherit (pkgs.stdenv) isDarwin isx86_64;
@@ -96,6 +96,7 @@
           clippy = cargoClippy oboro.args;
           fmt = cargoFmt oboro.args;
           rustTest = cargoNextest oboro.args;
+          nixTest = import ./nix/checks { inherit pkgs; };
         };
 
         devShells.default = pkgs.mkShell {
