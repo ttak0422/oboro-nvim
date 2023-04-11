@@ -141,7 +141,7 @@ in rec {
     } else
       let default = bundleConfigDefault;
       in {
-        inherit (default) start preConfig config lazy;
+        inherit (default) startup preConfig config lazy;
         id = bundle;
         plugins = default.plugins;
         deps = default.depends;
