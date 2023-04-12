@@ -19,8 +19,7 @@
     };
   };
 
-  outputs =
-    { self, nixpkgs, flake-utils, fenix, crane, ... }@inputs:
+  outputs = { self, nixpkgs, flake-utils, fenix, crane, ... }@inputs:
     flake-utils.lib.eachSystem [
       # TODO: support linux
       # "x86_64-linux"
@@ -28,8 +27,6 @@
       "aarch64-darwin"
     ] (system:
       let
-        VERSION = "0.0.1";
-
         pkgs = import nixpkgs {
           inherit system;
           overlays =
@@ -44,7 +41,7 @@
         ];
 
         inherit (builtins) readFile;
-        inherit (pkgs) vimUtils nix-filter callPackage;
+        inherit (pkgs) vimUtils nix-filter;
         inherit (pkgs.writers) writePython3Bin;
         inherit (pkgs.lib) optionals;
         inherit (pkgs.stdenv) isDarwin isx86_64;
@@ -82,7 +79,7 @@
             '';
             preferLocalBuild = true;
           };
-          version = VERSION;
+          version = "0.1.0";
           wip = scripts;
         };
       in {
