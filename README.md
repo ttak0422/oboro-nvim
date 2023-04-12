@@ -1,5 +1,4 @@
-# oboro-nvim
-
+# oboro-nvim [![test](https://github.com/ttak0422/oboro-nvim/actions/workflows/test.yml/badge.svg)](https://github.com/ttak0422/oboro-nvim/actions/workflows/test.yml)
 Neovim configuration manager for Nix.
 
 ### Example
@@ -229,3 +228,6 @@ Neovim configuration manager for Nix.
 | lang | "vim" \| "lua"  | - | language |
 | code | string | "" | config code |
 | args | attrs | {} | arguments |
+
+--- 
+[![built with nix](https://builtwithnix.org/badge.svg)](https://builtwithnix.org)
