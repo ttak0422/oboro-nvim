@@ -60,7 +60,7 @@
         inherit (pkgs.lib) optionals;
         inherit (pkgs.stdenv) isDarwin isx86_64;
         inherit (craneLib.overrideToolchain toolchain)
-          buildDepsOnly buildPackage cargoClippy cargoFmt cargoNextest;
+          buildDepsOnly buildPackage cargoClippy cargoNextest;
 
         scripts = {
           preprocess = writePython3Bin "preprocess" { libraries = [ ]; }
@@ -114,7 +114,6 @@
             };
           };
           clippy = cargoClippy oboro.args;
-          fmt = cargoFmt oboro.args;
           rustTest = cargoNextest oboro.args;
           nixTest = import ./nix/checks { inherit pkgs; };
         };
