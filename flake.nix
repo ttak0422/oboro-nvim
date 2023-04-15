@@ -110,6 +110,7 @@
               stylua.enable = true;
               nixfmt.enable = true;
               statix.enable = true;
+              rustfmt.enable = true;
             };
           };
           clippy = cargoClippy oboro.args;
