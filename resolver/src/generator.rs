@@ -5,7 +5,7 @@ use std::fs::{create_dir, File};
 use std::io::Write;
 
 /// vector to table.
-fn to_lua_table(v: &Vec<&str>) -> String {
+fn to_lua_table(v: &[&str]) -> String {
     v.iter()
         .fold(String::from("{"), |acc, x| acc + "'" + x + "',")
         + "}"

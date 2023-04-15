@@ -1,4 +1,4 @@
-{ nix-filter, oboro, scripts }:
+{ oboro }:
 { config, pkgs, lib, ... }:
 let
   inherit (builtins) toJSON map;
@@ -40,8 +40,8 @@ let
 
   oboroSetupCode = let
     oboroRoot = mkDerivation {
+      inherit (oboro) version;
       pname = "oboro-config-root";
-      version = oboro.version;
       phases = [ "buildPhase" ];
       buildPhase = ''
         mkdir $out

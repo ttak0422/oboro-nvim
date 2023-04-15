@@ -195,7 +195,7 @@ fn map(config: &OboroPluginConfig) -> OboroConfig<'_> {
             id: &plugin.id,
             plugin: &plugin.plugin,
             startup: &plugin.startup,
-            pre_config: &&plugin.pre_config,
+            pre_config: &plugin.pre_config,
             config: &plugin.config,
             deps: to_str_vector(&plugin.deps),
             dep_bundles: to_str_vector(&plugin.dep_bundles),
