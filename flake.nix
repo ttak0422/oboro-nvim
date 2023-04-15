@@ -5,6 +5,17 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
     nix-filter.url = "github:numtide/nix-filter";
+    flake-compat = {
+      url = "github:edolstra/flake-compat";
+      flake = false;
+    };
+    pre-commit-hooks = {
+      url = "github:cachix/pre-commit-hooks.nix";
+      inputs.flake-compat.follows = "flake-compat";
+      inputs.flake-utils.follows = "flake-utils";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs-stable.follows = "nixpkgs";
+    };
     fenix = {
       url = "github:nix-community/fenix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -19,8 +30,10 @@
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils, fenix, crane, ... }@inputs:
+  outputs =
+    { self, nixpkgs, flake-utils, pre-commit-hooks, fenix, crane, ... }@inputs:
     flake-utils.lib.eachSystem [
+
       # TODO: support linux
       # "x86_64-linux"
       "x86_64-darwin"
@@ -41,7 +54,8 @@
         ];
 
         inherit (builtins) readFile;
-        inherit (pkgs) vimUtils nix-filter;
+        inherit (pkgs) nix-filter;
+        inherit (pkgs.vimUtils) buildVimPlugin;
         inherit (pkgs.writers) writePython3Bin;
         inherit (pkgs.lib) optionals;
         inherit (pkgs.stdenv) isDarwin isx86_64;
@@ -67,9 +81,9 @@
           in args' // { cargoArtifacts = buildDepsOnly args'; };
           resolver = buildPackage args;
           # TODO: optimized , normal
-          vimPlugin = vimUtils.buildVimPlugin {
+          vimPlugin = buildVimPlugin {
+            inherit (oboro) version;
             pname = "oboro-nvim";
-            version = oboro.version;
             src = nix-filter {
               root = ./.;
               include = [ "lua" ];
@@ -84,12 +98,20 @@
         };
       in {
         darwinModules = rec {
-          oboro-nvim =
-            import ./nix/module.nix { inherit oboro nix-filter scripts; };
+          oboro-nvim = import ./nix/module.nix { inherit oboro; };
           default = oboro-nvim;
         };
 
         checks = {
+          pre-commit-check = pre-commit-hooks.lib.${system}.run {
+            src = ./.;
+            hooks = {
+              deadnix.enable = true;
+              stylua.enable = true;
+              nixfmt.enable = true;
+              statix.enable = true;
+            };
+          };
           clippy = cargoClippy oboro.args;
           fmt = cargoFmt oboro.args;
           rustTest = cargoNextest oboro.args;
@@ -97,6 +119,7 @@
         };
 
         devShells.default = pkgs.mkShell {
+          inherit (self.checks.${system}.pre-commit-check) shellHook;
           packages = [ toolchain ];
           inputsFrom = [ oboro ];
           RUST_BACKTRACE = "full";

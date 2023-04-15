@@ -1,4 +1,4 @@
-{ ... }:
+_:
 let inherit (builtins) elemAt;
 in rec {
   extraPackages = [{ pname = "extra1"; }];
@@ -12,6 +12,7 @@ in rec {
 
   startPlugin = {
     filled = {
+      inherit extraPackages;
       type' = "plugin";
       plugin = elemAt vimPluginPackages 0;
       startup = {
@@ -19,16 +20,15 @@ in rec {
         code = "start startup";
         args = { start = "start"; };
       };
-      extraPackages = extraPackages;
     };
   };
 
   optPlugin = {
     filled = {
+      inherit extraPackages;
       type' = "plugin";
       plugin = elemAt vimPluginPackages 0;
       startup = "opt startup";
-      extraPackages = extraPackages;
       preConfig = {
         lang = "vim";
         code = "opt preConfig";
@@ -68,6 +68,7 @@ in rec {
 
   bundlePlugin = {
     filled = {
+      inherit extraPackages;
       type' = "bundle";
       name = "dummy";
       plugins = [
@@ -89,7 +90,6 @@ in rec {
         }
       ];
       startup = "bundle startup";
-      extraPackages = extraPackages;
       preConfig = "bundle preConfig";
       config = "bundle config";
       depends = [

@@ -2,7 +2,8 @@
 let
   inherit (builtins) toJSON;
   inherit (pkgs) lib runCommand writeText;
-  results = lib.runTests ({ } // (import ./adapter.spec.nix { inherit pkgs lib; }));
+  results =
+    lib.runTests ({ } // (import ./adapter.spec.nix { inherit pkgs lib; }));
   resultsFile = writeText "errors.json" (toJSON results);
 in runCommand "nix-ut" { } ''
   mkdir $out

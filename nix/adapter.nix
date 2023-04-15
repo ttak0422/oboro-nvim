@@ -141,9 +141,8 @@ in rec {
     } else
       let default = bundleConfigDefault;
       in {
-        inherit (default) startup preConfig config lazy;
+        inherit (default) startup preConfig config lazy plugins;
         id = bundle;
-        plugins = default.plugins;
         deps = default.depends;
         depBundles = default.dependBundles;
         mods = default.modules;
@@ -159,10 +158,10 @@ in rec {
   # (package | optPluginConfig | bundleConfig) -> List[package | optPluginConfig]
   expandPlugin = x:
     if x ? type' && x.type' == "plugin" then
-      let depends = if x ? depends then x.depends else [ ];
+      let depends = x.depends or [ ];
       in flatten ([ x ] ++ (map expandPlugin depends))
     else if x ? type' && x.type' == "bundle" then
-      let depends = if x ? depends then x.depends else [ ];
+      let depends = x.depends or [ ];
       in flatten (map expandPlugin (x.plugins ++ depends))
     else
       [ x ];
@@ -173,6 +172,5 @@ in rec {
   # --------------------
   # (package | optPluginConfig | bundleConfig) -> List[extraPackage]
   extractExtraPackages = x:
-    flatten ((map (y: if y ? extraPackages then y.extraPackages else [ ]))
-      (flatten (map expandPlugin x)));
+    flatten ((map (y: y.extraPackages or [ ])) (flatten (map expandPlugin x)));
 }
