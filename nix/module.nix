@@ -45,7 +45,7 @@ let
       phases = [ "buildPhase" ];
       buildPhase = ''
         mkdir $out
-        ${oboro.resolver}/bin/oboro-resolver ${oboroJson} $out
+        ${oboro.resolver.app}/bin/oboro-resolver ${oboroJson} $out
       '';
     };
   in ''

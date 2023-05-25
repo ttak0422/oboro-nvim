@@ -45,13 +45,13 @@
           overlays =
             [ fenix.overlays.default inputs.nix-filter.overlays.default ];
         };
-        craneLib = crane.lib.${system};
         toolchain = pkgs.fenix.complete.withComponents [
           "cargo"
           "clippy"
           "rustfmt"
           "rustc"
         ];
+        craneLib = crane.lib.${system}.overrideToolchain toolchain;
 
         inherit (builtins) readFile;
         inherit (pkgs) nix-filter;
@@ -59,27 +59,33 @@
         inherit (pkgs.writers) writePython3Bin;
         inherit (pkgs.lib) optionals;
         inherit (pkgs.stdenv) isDarwin isx86_64;
-        inherit (craneLib.overrideToolchain toolchain)
-          buildDepsOnly buildPackage cargoClippy cargoNextest;
+        inherit (craneLib)
+          path cleanCargoSource buildDepsOnly cargoClippy cargoNextest
+          buildPackage;
 
         scripts = {
           preprocess = writePython3Bin "preprocess" { libraries = [ ]; }
             (readFile ./scripts/preprocess.py);
         };
 
-        oboro = rec {
-          args = let
-            args' = {
-              src = craneLib.cleanCargoSource ./.;
+        oboro = {
+          resolver = rec {
+            commonArgs = {
+              src = cleanCargoSource (path ./.);
               buildInputs = [ ] ++ optionals isDarwin
                 (with pkgs; [ libiconv darwin.apple_sdk.frameworks.Security ])
                 ++ optionals (isDarwin && isx86_64)
                 (with pkgs; [ darwin.apple_sdk.frameworks.CoreFoundation ]);
+              nativeBuildgInputs = [ ];
               cargoToml = ./resolver/Cargo.toml;
               cargoVendorDir = null;
             };
-          in args' // { cargoArtifacts = buildDepsOnly args'; };
-          resolver = buildPackage args;
+            cargoArtifacts =
+              buildDepsOnly (commonArgs // { pname = "oboro-resolver-deps"; });
+            clippy = cargoClippy (commonArgs // { inherit cargoArtifacts; });
+            nextest = cargoNextest (commonArgs // { inherit cargoArtifacts; });
+            app = buildPackage (commonArgs // { inherit cargoArtifacts; });
+          };
           # TODO: optimized , normal
           vimPlugin = buildVimPlugin {
             inherit (oboro) version;
@@ -113,8 +119,7 @@
               rustfmt.enable = true;
             };
           };
-          clippy = cargoClippy oboro.args;
-          rustTest = cargoNextest oboro.args;
+          inherit (oboro.resolver) clippy nextest app;
           nixTest = import ./nix/checks { inherit pkgs; };
         };
 
