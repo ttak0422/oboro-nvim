@@ -83,7 +83,7 @@
             cargoArtifacts =
               buildDepsOnly (commonArgs // { pname = "oboro-resolver-deps"; });
             clippy = cargoClippy (commonArgs // { inherit cargoArtifacts; });
-            nexttest = cargoNextest (commonArgs // { inherit cargoArtifacts; });
+            nextest = cargoNextest (commonArgs // { inherit cargoArtifacts; });
             app = buildPackage (commonArgs // { inherit cargoArtifacts; });
           };
           # TODO: optimized , normal
@@ -119,7 +119,7 @@
               rustfmt.enable = true;
             };
           };
-          inherit (oboro.resolver) clippy nextest;
+          inherit (oboro.resolver) clippy nextest app;
           nixTest = import ./nix/checks { inherit pkgs; };
         };
 
