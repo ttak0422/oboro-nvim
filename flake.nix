@@ -68,24 +68,24 @@
             (readFile ./scripts/preprocess.py);
         };
 
-        oboro = rec {
-          commonArgs = {
-            src = cleanCargoSource (path ./.);
-            buildInputs = [ ] ++ optionals isDarwin
-              (with pkgs; [ libiconv darwin.apple_sdk.frameworks.Security ])
-              ++ optionals (isDarwin && isx86_64)
-              (with pkgs; [ darwin.apple_sdk.frameworks.CoreFoundation ]);
-            nativeBuildgInputs = [ ];
-            cargoToml = ./resolver/Cargo.toml;
-            cargoVendorDir = null;
+        oboro = {
+          resolver = rec {
+            commonArgs = {
+              src = cleanCargoSource (path ./.);
+              buildInputs = [ ] ++ optionals isDarwin
+                (with pkgs; [ libiconv darwin.apple_sdk.frameworks.Security ])
+                ++ optionals (isDarwin && isx86_64)
+                (with pkgs; [ darwin.apple_sdk.frameworks.CoreFoundation ]);
+              nativeBuildgInputs = [ ];
+              cargoToml = ./resolver/Cargo.toml;
+              cargoVendorDir = null;
+            };
+            cargoArtifacts =
+              buildDepsOnly (commonArgs // { pname = "oboro-resolver-deps"; });
+            clippy = cargoClippy (commonArgs // { inherit cargoArtifacts; });
+            nexttest = cargoNextest (commonArgs // { inherit cargoArtifacts; });
+            app = buildPackage (commonArgs // { inherit cargoArtifacts; });
           };
-          cargoArtifacts =
-            buildDepsOnly (commonArgs // { pname = "oboro-resolver-deps"; });
-          resolverClippy =
-            cargoClippy (commonArgs // { inherit cargoArtifacts; });
-          resolverNexttest =
-            cargoNextest (commonArgs // { inherit cargoArtifacts; });
-          resolver = buildPackage (commonArgs // { inherit cargoArtifacts; });
           # TODO: optimized , normal
           vimPlugin = buildVimPlugin {
             inherit (oboro) version;
@@ -108,8 +108,6 @@
           default = oboro-nvim;
         };
 
-        packages.default = oboro.resolver;
-
         checks = {
           pre-commit-check = pre-commit-hooks.lib.${system}.run {
             src = ./.;
@@ -121,7 +119,7 @@
               rustfmt.enable = true;
             };
           };
-          inherit (oboro) resolverClippy resolverNexttest;
+          inherit (oboro.resolver) clippy nextest;
           nixTest = import ./nix/checks { inherit pkgs; };
         };
 
