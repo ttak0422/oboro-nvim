@@ -33,9 +33,8 @@
   outputs =
     { self, nixpkgs, flake-utils, pre-commit-hooks, fenix, crane, ... }@inputs:
     flake-utils.lib.eachSystem [
-
-      # TODO: support linux
-      # "x86_64-linux"
+      "x86_64-linux"
+      "aarch64-linux"
       "x86_64-darwin"
       "aarch64-darwin"
     ] (system:
@@ -57,7 +56,7 @@
         inherit (pkgs) nix-filter;
         inherit (pkgs.vimUtils) buildVimPlugin;
         inherit (pkgs.writers) writePython3Bin;
-        inherit (pkgs.lib) optionals;
+        inherit (pkgs.lib) optionals attrsets;
         inherit (pkgs.stdenv) isDarwin isx86_64;
         inherit (craneLib)
           path cleanCargoSource buildDepsOnly cargoClippy cargoNextest
@@ -78,7 +77,11 @@
                 (with pkgs; [ darwin.apple_sdk.frameworks.CoreFoundation ]);
               nativeBuildgInputs = [ ];
               cargoToml = ./resolver/Cargo.toml;
-              cargoVendorDir = null;
+              cargoLock = ./resolver/Cargo.lock;
+              postUnpack = ''
+                cd $sourceRoot/resolver
+                sourceRoot="."
+              '';
             };
             cargoArtifacts =
               buildDepsOnly (commonArgs // { pname = "oboro-resolver-deps"; });
@@ -102,8 +105,14 @@
           version = "0.1.0";
           wip = scripts;
         };
-      in {
+      in attrsets.optionalAttrs isDarwin {
+        # Deprecated. use homeManagerModules
         darwinModules = rec {
+          oboro-nvim = import ./nix/module.nix { inherit oboro; };
+          default = oboro-nvim;
+        };
+      } // {
+        homeManagerModules = rec {
           oboro-nvim = import ./nix/module.nix { inherit oboro; };
           default = oboro-nvim;
         };
@@ -116,7 +125,8 @@
               stylua.enable = true;
               nixfmt.enable = true;
               statix.enable = true;
-              rustfmt.enable = true;
+              # WIP
+              # rustfmt.enable = true;
             };
           };
           inherit (oboro.resolver) clippy nextest app;
