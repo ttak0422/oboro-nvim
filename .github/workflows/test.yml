@@ -10,7 +10,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ macos-12 ubuntu-latest ]
+        os: [ macos-12, ubuntu-latest ]
     runs-on: ${{ matrix.os }}
 
     steps:
