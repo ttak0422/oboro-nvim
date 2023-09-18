@@ -1,3 +1,7 @@
+
+> **Warning**
+> → oboro-nvim will be archived. (new manager → [bundler-nvim](https://github.com/ttak0422/bundler-nvim))
+
 # oboro-nvim [![test](https://github.com/ttak0422/oboro-nvim/actions/workflows/test.yml/badge.svg)](https://github.com/ttak0422/oboro-nvim/actions/workflows/test.yml)
 Neovim configuration manager for Nix.
 
